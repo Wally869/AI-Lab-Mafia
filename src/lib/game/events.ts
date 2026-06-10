@@ -1,9 +1,10 @@
-import { addHeat, pushLog } from './effects';
+import { addHeat, heatStr, pushLog } from './effects';
 import { fmt, revenue } from './helpers';
 import type { GameState } from './types';
 
 export interface EventOption {
-  label: string;
+  /** Static text, or a function of state for costs that change at runtime. */
+  label: string | ((s: GameState) => string);
   apply: (s: GameState) => void;
 }
 
@@ -13,6 +14,18 @@ export interface GameEvent {
   options: EventOption[];
 }
 
+export function optionLabel(opt: EventOption, s: GameState): string {
+  return typeof opt.label === 'function' ? opt.label(s) : opt.label;
+}
+
+/** Label-facing heat number: what addHeat will actually apply for a gain. */
+const shownHeat = (s: GameState, n: number): string => {
+  const v = n * s.heatGainMult;
+  return Number.isInteger(v) ? String(v) : v.toFixed(1);
+};
+
+const prepayCost = (s: GameState): number => 800 + revenue(s) * 12;
+
 export const EVENTS: GameEvent[] = [
   {
     title: "A journalist has your internal 'crush them' memo.",
@@ -21,21 +34,21 @@ export const EVENTS: GameEvent[] = [
         label: 'Pay them off (15 inf)',
         apply(s) {
           if (s.influence < 15) {
-            addHeat(s, 12);
-            pushLog(s, "Couldn't afford the payoff. The memo prints. +12 heat.");
+            const h = addHeat(s, 12);
+            pushLog(s, `Couldn't afford the payoff. The memo prints. ${heatStr(h)}.`);
             return;
           }
           s.influence -= 15;
           if (Math.random() < 0.3) {
-            addHeat(s, 10);
-            pushLog(s, 'They took the money AND ran the story. +10 heat.');
+            const h = addHeat(s, 10);
+            pushLog(s, `They took the money AND ran the story. ${heatStr(h)}.`);
           } else {
             pushLog(s, 'The story dies quietly. Journalism is expensive.');
           }
         },
       },
       {
-        label: 'Let it print (+12 heat)',
+        label: (s) => `Let it print (+${shownHeat(s, 12)} heat)`,
         apply(s) {
           addHeat(s, 12);
           pushLog(s, "'AI LAB PLOTS MARKET DOMINATION.' Your mother calls, concerned.");
@@ -47,9 +60,9 @@ export const EVENTS: GameEvent[] = [
     title: 'Global GPU shortage incoming.',
     options: [
       {
-        label: 'Prepay supplier',
+        label: (s) => `Prepay supplier ($${fmt(prepayCost(s))})`,
         apply(s) {
-          const cost = 800 + revenue(s) * 12;
+          const cost = prepayCost(s);
           if (s.cash < cost) {
             s.shortageT = 15;
             pushLog(s, "Couldn't afford the prepayment. Compute −30% for 15s.");
@@ -72,7 +85,7 @@ export const EVENTS: GameEvent[] = [
     title: 'A dying startup offers you their team.',
     options: [
       {
-        label: 'Acqui-hire ($1,800)',
+        label: 'Acqui-hire — 2 researchers ($1,800)',
         apply(s) {
           if (s.cash < 1800) {
             pushLog(s, "Couldn't afford the acqui-hire. They join a rival. Awkward.");
@@ -122,18 +135,18 @@ export const EVENTS: GameEvent[] = [
         label: 'Fund a safety institute ($2,500)',
         apply(s) {
           if (s.cash < 2500) {
-            addHeat(s, 8);
-            pushLog(s, "Couldn't afford the optics. Footage goes viral. +8 heat.");
+            const h = addHeat(s, 8);
+            pushLog(s, `Couldn't afford the optics. Footage goes viral. ${heatStr(h)}.`);
             return;
           }
           s.cash -= 2500;
-          addHeat(s, -10);
+          const h = addHeat(s, -10);
           s.influence += 5;
-          pushLog(s, 'The institute publishes reassuring reports. −10 heat.');
+          pushLog(s, `The institute publishes reassuring reports. ${heatStr(h)}.`);
         },
       },
       {
-        label: 'Ignore them (+8 heat)',
+        label: (s) => `Ignore them (+${shownHeat(s, 8)} heat)`,
         apply(s) {
           addHeat(s, 8);
           pushLog(s, 'Drone footage of your cooling towers trends for a day.');

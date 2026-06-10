@@ -4,8 +4,11 @@
   import {
     demand,
     fmt,
+    inferenceCapacity,
     lockFraction,
     opex,
+    priceMult,
+    pricingShareDrift,
     researchRate,
     revenue,
     servedFraction,
@@ -17,6 +20,8 @@
 
   const served = $derived(servedFraction(g.state));
   const lock = $derived(lockFraction(g.state));
+  const capacityRatio = $derived(demand(g.state) > 0 ? inferenceCapacity(g.state) / demand(g.state) : 0);
+  const drift = $derived(pricingShareDrift(g.state));
 </script>
 
 <section class="panel mb-3" aria-label="Compute allocation">
@@ -47,11 +52,41 @@
     <span class="label">Inference</span>
   </div>
 
+  <div class="mt-2 flex items-center gap-3">
+    <span class="label">Cheap</span>
+    <input
+      type="range"
+      min="0"
+      max="100"
+      step="1"
+      bind:value={g.state.pricing}
+      class="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-raise accent-(--color-ok)"
+      aria-label="Pricing between cheap and costly"
+    />
+    <span class="label">Costly</span>
+  </div>
+  <p class="num mt-1 text-xs text-mut">
+    revenue ×{priceMult(g.state).toFixed(2)} ·
+    {#if drift > 0}
+      <span class="text-ok">+{(drift * 60).toFixed(1)}% share/min</span>
+    {:else if drift < 0}
+      <span class="text-bad">−{(-drift * 60).toFixed(1)}% share/min</span>
+    {:else if g.state.pricing < 50}
+      <span class="text-warn">no share growth — serving under 95% of demand</span>
+    {:else}
+      <span>share steady</span>
+    {/if}
+  </p>
+
   <div class="mt-2 flex flex-wrap justify-between gap-2 text-xs text-mut">
     <span class="num">{researchRate(g.state).toFixed(1)} research/s</span>
-    <span class="num" style:color={served < 0.65 ? 'var(--color-bad)' : undefined}>
-      serving {Math.round(served * 100)}% of demand
-    </span>
+    {#if capacityRatio > 1}
+      <span class="num">overserving ×{capacityRatio.toFixed(1)} — spare capacity for cheap pricing</span>
+    {:else}
+      <span class="num" style:color={served < 0.65 ? 'var(--color-bad)' : undefined}>
+        serving {Math.round(served * 100)}% of demand
+      </span>
+    {/if}
     <span class="num">${revenue(g.state).toFixed(1)}/s revenue</span>
   </div>
   <p class="mt-1 text-xs text-dim">

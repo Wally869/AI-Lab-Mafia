@@ -21,7 +21,7 @@ import {
   TIERS,
   TRAIN_RUNS,
 } from './constants';
-import { addHeat, endGame, pushLog, stealShare } from './effects';
+import { addHeat, endGame, heatStr, pushLog, stealShare } from './effects';
 import { EVENTS } from './events';
 import {
   acquisitionCost,
@@ -32,6 +32,7 @@ import {
   netCashFlow,
   pointsMult,
   prCost,
+  pricingShareDrift,
   researchRate,
   tierIndex,
   totalCompute,
@@ -69,6 +70,7 @@ export function createGame(meta: FounderMeta): GameState {
     training: null,
     agiProgress: null,
     alloc: 50,
+    pricing: 50,
     targetIdx: 0,
     incomeMult: tier.incomeMult * gm,
     researchMult: tier.researchMult * gm,
@@ -80,6 +82,7 @@ export function createGame(meta: FounderMeta): GameState {
     opsec: false,
     scienceCosts: [80, 60],
     prUses: 0,
+    acquisitions: 0,
     shortageT: 0,
     brainDrainT: 0,
     brokeTicks: 0,
@@ -88,6 +91,9 @@ export function createGame(meta: FounderMeta): GameState {
     lastSabBlockTick: -100,
     heatWarned: false,
     milestones: {},
+    peakHeat: 0,
+    runNumber: meta.runs,
+    tierName: tier.name,
     buildings: BUILDINGS.map((b, i) => ({
       cost: b.baseCost,
       count: b.effect === 'researcher' ? tier.researchers
@@ -117,8 +123,10 @@ export function createGame(meta: FounderMeta): GameState {
 
 export function answerPrompt(s: GameState): void {
   if (s.ended) return;
-  s.cash += ECON.clickCash * s.incomeMult;
-  if (Math.random() < 0.3) s.research += 0.5;
+  // Scales with gen so clicking stays a real early lever; automation still
+  // outscales it eventually — being outscaled by the clanker is the theme.
+  s.cash += ECON.clickCash * s.gen * s.incomeMult;
+  if (Math.random() < 0.3) s.research += 0.5 * s.gen;
 }
 
 export function buyBuilding(s: GameState, index: number): void {
@@ -194,20 +202,27 @@ export function startTraining(s: GameState): void {
   }
 }
 
-function retaliate(s: GameState, rival: Rival, why: string): void {
+/**
+ * Possible counterattack after a player op. Capped relative to the share the
+ * op actually took, so an op is never strictly negative-EV; ops that take no
+ * share (spy, sabotage) keep a small floor of risk.
+ */
+function retaliate(s: GameState, rival: Rival, why: string, shareTaken: number): void {
   if (Math.random() < rival.retaliation && rival.share > 0.05) {
-    const dmg = clamp((0.8 + Math.random() * 1.2) * s.defenseMult, 0, s.share - 0.5);
+    const cap = Math.max(ECON.retaliationCapFloorPct, shareTaken * ECON.retaliationCapFraction);
+    const roll = Math.min((0.8 + Math.random() * 1.2) * s.defenseMult, cap);
+    const dmg = clamp(roll, 0, s.share - 0.5);
     if (dmg > 0) {
       s.share -= dmg;
       rival.share += dmg;
-      pushLog(s, `${rival.name} retaliates for the ${why}. You lose ${dmg.toFixed(1)}%.`);
+      pushLog(s, `${rival.name} retaliates for the ${why}. You lose ${dmg.toFixed(1)}% market share.`);
     }
   }
 }
 
 export function canRunOp(s: GameState, key: OpKey): boolean {
   if (s.ended || s.cooldowns[key] > 0) return false;
-  if (key === 'pr') return s.cash >= prCost(s) && s.openMarket >= 0.1;
+  if (key === 'pr') return s.cash >= prCost(s);
   if (s.influence < OP_INFLUENCE_COSTS[key]) return false;
   const t = currentTarget(s);
   switch (key) {
@@ -218,8 +233,9 @@ export function canRunOp(s: GameState, key: OpKey): boolean {
     case 'sab':
       return t !== null && t.agi >= 8;
     case 'acq': {
+      // Nobody sells to a garage nobody: acquisitions need credibility.
       const w = weakestRival(s);
-      return w !== null && s.cash >= acquisitionCost(s);
+      return w !== null && s.share >= ECON.acqShareGate && s.cash >= acquisitionCost(s);
     }
     default:
       return true;
@@ -236,10 +252,34 @@ export function runOp(s: GameState, key: OpKey): void {
       s.prUses += 1;
       s.cooldowns.pr = OP_COOLDOWNS.pr;
       addHeat(s, 2);
-      const got = Math.min((0.6 + 0.5 * s.gen) * (0.8 + Math.random() * 0.5), s.openMarket);
-      s.openMarket -= got;
-      s.share += got;
-      pushLog(s, `Marketing blitz lands. +${got.toFixed(1)}% from the open market.`);
+      // Free customers first; the shortfall is raided from rivals at reduced
+      // efficiency so the blitz stays useful when the open market runs dry.
+      const want = (0.6 + 0.5 * s.gen) * (0.8 + Math.random() * 0.5);
+      const fromOpen = Math.min(want, s.openMarket);
+      s.openMarket -= fromOpen;
+      s.share += fromOpen;
+      let fromRivals = 0;
+      const shortfall = want - fromOpen;
+      if (shortfall > 0) {
+        const pool = aliveRivals(s);
+        const total = pool.reduce((sum, r) => sum + r.share, 0);
+        if (total > 0) {
+          const take = Math.min(shortfall * ECON.blitzRivalEfficiency, total);
+          for (const r of pool) {
+            const t = take * (r.share / total);
+            r.share -= t;
+            fromRivals += t;
+          }
+          s.share += fromRivals;
+        }
+      }
+      const got = fromOpen + fromRivals;
+      pushLog(
+        s,
+        `Marketing blitz lands. +${got.toFixed(1)}% market share${
+          fromRivals > fromOpen ? ', mostly converted from rival customers' : ' from the open market'
+        }.`,
+      );
       break;
     }
     case 'poach': {
@@ -249,8 +289,8 @@ export function runOp(s: GameState, key: OpKey): void {
       addHeat(s, 6);
       const got = stealShare(s, (1.2 + Math.random() * 1.6) / target.defense, target);
       s.research += 25;
-      pushLog(s, `Your new hire arrives from ${target.name} with +${got.toFixed(1)}% share and 25 research.`);
-      retaliate(s, target, 'poaching');
+      pushLog(s, `Your new hire arrives from ${target.name} with +${got.toFixed(1)}% market share and 25 research.`);
+      retaliate(s, target, 'poaching', got);
       break;
     }
     case 'spy': {
@@ -262,7 +302,7 @@ export function runOp(s: GameState, key: OpKey): void {
       s.research += gain;
       target.agi = Math.max(0, target.agi - 3);
       pushLog(s, `A USB stick changes hands in a parking garage. +${gain} research from ${target.name}'s checkpoints.`);
-      retaliate(s, target, 'espionage');
+      retaliate(s, target, 'espionage', 0);
       break;
     }
     case 'smear': {
@@ -274,8 +314,8 @@ export function runOp(s: GameState, key: OpKey): void {
       target.share -= lost;
       s.openMarket += lost * 0.6;
       s.share += lost * 0.4;
-      pushLog(s, `Anonymous benchmark leak. ${target.name} bleeds ${lost.toFixed(1)}%.`);
-      retaliate(s, target, 'smear');
+      pushLog(s, `Anonymous benchmark leak. ${target.name} bleeds ${lost.toFixed(1)}% market share.`);
+      retaliate(s, target, 'smear', lost * 0.4);
       break;
     }
     case 'sab': {
@@ -285,7 +325,7 @@ export function runOp(s: GameState, key: OpKey): void {
       addHeat(s, 15);
       target.agi = Math.max(0, target.agi - 8);
       pushLog(s, `A 'power grid incident' corrupts ${target.name}'s checkpoint. Their AGI slips back 8%.`);
-      retaliate(s, target, 'sabotage');
+      retaliate(s, target, 'sabotage', 0);
       break;
     }
     case 'bribe': {
@@ -294,8 +334,8 @@ export function runOp(s: GameState, key: OpKey): void {
       const catchChance = 0.2 + s.heat / 300;
       if (Math.random() < catchChance) {
         s.influence = Math.max(0, s.influence - 15);
-        addHeat(s, 18);
-        pushLog(s, "The 'regulator' was wearing a wire. +18 heat, and your contacts stop returning calls.");
+        const h = addHeat(s, 18);
+        pushLog(s, `The 'regulator' was wearing a wire. ${heatStr(h)}, and your contacts stop returning calls.`);
       } else {
         addHeat(s, -30);
         pushLog(s, 'A generous donation to the Committee for Responsible Innovation. Files go missing.');
@@ -310,10 +350,21 @@ export function runOp(s: GameState, key: OpKey): void {
       s.cash -= cost;
       s.influence -= OP_INFLUENCE_COSTS.acq;
       s.cooldowns.acq = OP_COOLDOWNS.acq;
+      s.acquisitions += 1;
       addHeat(s, 20);
       stealShare(s, w.share, w);
       s.incomeMult *= 1.15;
-      pushLog(s, `You acquire ${w.name}. 'A merger of equals,' says the press release. Income +15%.`);
+      pushLog(
+        s,
+        `You acquire ${w.name}. 'A merger of equals,' says the press release. Income +15%, the FTC adds a whiteboard with your face on it.`,
+      );
+      if (aliveRivals(s).length === 0) {
+        endGame(
+          s,
+          'consolidation',
+          'There is no industry left. There is only you. The DOJ files something described as historic.',
+        );
+      }
       break;
     }
   }
@@ -356,7 +407,7 @@ export function buyStructural(s: GameState, key: StructuralKey): void {
 
 export function sellCompany(s: GameState): void {
   if (s.ended) return;
-  endGame(s, false, "You sell the company. The acquirer's CEO calls it 'visionary.' You call it an exit.");
+  endGame(s, 'sale', "You sell the company. The acquirer's CEO calls it 'visionary.' You call it an exit.");
 }
 
 export function resolveEvent(s: GameState, optionIndex: number): void {
@@ -389,7 +440,46 @@ export function tickSecond(s: GameState): void {
   if (s.share > ECON.scrutinyShareFloor) {
     addHeat(s, (s.share - ECON.scrutinyShareFloor) * ECON.scrutinyHeatPerPoint);
   }
+  // Every consolidated rival keeps antitrust eyes on you permanently.
+  if (s.acquisitions > 0) addHeat(s, s.acquisitions * ECON.acqHeatPerSecond);
   s.heat = Math.max(0, s.heat - (s.heat >= ECON.heatRevenueThreshold ? 0.15 : 0.3));
+
+  // Pricing drift: cheap (and served) pulls customers in, costly bleeds them.
+  const drift = pricingShareDrift(s);
+  if (drift > 0) {
+    const pool = aliveRivals(s);
+    const totalAvail = pool.reduce((sum, r) => sum + r.share, 0) + s.openMarket;
+    if (totalAvail > 0) {
+      const take = Math.min(drift, totalAvail);
+      for (const r of pool) {
+        const t = take * (r.share / totalAvail);
+        r.share -= t;
+        s.share += t;
+      }
+      const tOpen = take * (s.openMarket / totalAvail);
+      s.openMarket -= tOpen;
+      s.share += tOpen;
+    }
+  } else if (drift < 0) {
+    const pool = aliveRivals(s);
+    const loss = Math.min(-drift, Math.max(0, s.share - 0.5));
+    if (pool.length > 0 && loss > 0) {
+      const total = pool.reduce((sum, r) => sum + r.share, 0) || 1;
+      for (const r of pool) r.share += loss * (r.share / total);
+      s.share -= loss;
+    }
+  }
+
+  // Universal churn: every lab leaks a sliver back to the open market, so the
+  // contested pool never dies and runaway leaders erode slightly.
+  const playerLeak = s.share * ECON.openMarketChurn;
+  s.share -= playerLeak;
+  s.openMarket += playerLeak;
+  for (const r of aliveRivals(s)) {
+    const leak = r.share * ECON.openMarketChurn;
+    r.share -= leak;
+    s.openMarket += leak;
+  }
 
   if (s.shortageT > 0) s.shortageT -= 1;
   if (s.brainDrainT > 0) s.brainDrainT -= 1;
@@ -420,11 +510,21 @@ export function tickSecond(s: GameState): void {
     if (s.agiProgress >= 100) {
       endGame(
         s,
-        true,
+        'agi',
         "AGI ACHIEVED. The market becomes a historical footnote. So does everything else, but that's a sequel problem.",
       );
       return;
     }
+  }
+
+  // The monopoly clause cuts both ways: 60% share means you own the industry.
+  if (s.share >= MONOPOLY_SHARE) {
+    endGame(
+      s,
+      'consolidation',
+      `You hit ${MONOPOLY_SHARE}% market share and de-facto own the industry. The regulators' filing is described as 'historic.'`,
+    );
+    return;
   }
 
   for (const m of SHARE_MILESTONES) {
@@ -442,7 +542,7 @@ export function tickSecond(s: GameState): void {
       pushLog(s, `PAYROLL WARNING: ${10 - s.brokeTicks}s of negative cash flow until insolvency. Cut costs or die.`);
     }
     if (s.brokeTicks >= 10) {
-      endGame(s, false, "Bankrupt. The megacluster is auctioned to a crypto company. Your researchers' badges stop working mid-swipe.");
+      endGame(s, 'loss', "Bankrupt. The megacluster is auctioned to a crypto company. Your researchers' badges stop working mid-swipe.");
       return;
     }
   } else {
@@ -485,7 +585,7 @@ export function tickRivals(s: GameState): void {
     if (r.agi >= 100) {
       endGame(
         s,
-        false,
+        'loss',
         `${r.name} achieves AGI first. Their model writes a polite email explaining why your company no longer needs to exist.`,
       );
       return;
@@ -514,10 +614,10 @@ export function tickRivals(s: GameState): void {
       }
     } else if (s.agiProgress !== null) {
       s.agiProgress = Math.max(0, s.agiProgress - 5);
-      pushLog(s, `${saboteur.name} sabotages your AGI run. Checkpoint corrupted: −5% progress.`);
+      pushLog(s, `SABOTAGE: ${saboteur.name} corrupts your AGI checkpoint. −5% run progress.`);
     } else if (s.training) {
       s.training.done = Math.max(0, s.training.done - 4);
-      pushLog(s, `${saboteur.name} sabotages your training run. 4 seconds of progress lost.`);
+      pushLog(s, `SABOTAGE: ${saboteur.name} hits your training run. 4 seconds of progress lost.`);
     }
   }
 
@@ -537,16 +637,23 @@ export function tickRivals(s: GameState): void {
   const pressure = (s.heat >= 70 ? 2 : 1) * (s.agiProgress !== null ? 1.6 : 1);
   const roll = Math.random();
 
-  if (s.agiProgress !== null || (roll < 0.45 && s.share > 1)) {
-    const taken = clamp((0.4 + Math.random() * 0.7) * pressure * s.defenseMult, 0, s.share - 0.5);
+  // Nobody undercuts a garage nobody: direct attacks ramp in above the share
+  // floor. The AGI run is the exception — mid-run, everyone comes for you.
+  const aggression =
+    s.agiProgress !== null
+      ? 1
+      : clamp((s.share - ECON.attackShareFloor) / ECON.attackShareRamp, 0, 1);
+
+  if (s.agiProgress !== null || (roll < 0.45 && aggression > 0)) {
+    const taken = clamp((0.4 + Math.random() * 0.7) * pressure * s.defenseMult * aggression, 0, s.share - 0.5);
     if (taken > 0) {
       s.share -= taken;
       actor.share += taken;
       pushLog(
         s,
         s.agiProgress !== null
-          ? `${actor.name} strikes while you're mid-run. −${taken.toFixed(1)}% share.`
-          : `${actor.name} undercuts your pricing. −${taken.toFixed(1)}% share.`,
+          ? `${actor.name} strikes while you're mid-run. −${taken.toFixed(1)}% market share.`
+          : `${actor.name} undercuts your pricing. −${taken.toFixed(1)}% market share.`,
       );
     }
   } else if (s.openMarket > 0.5 && roll < 0.75) {
@@ -576,7 +683,7 @@ export function tickRivals(s: GameState): void {
   if (monopolist && !s.ended) {
     endGame(
       s,
-      false,
+      'loss',
       `${monopolist.name} hits ${MONOPOLY_SHARE}% market share and de-facto owns the industry. You're acquired for an amount described as 'symbolic.'`,
     );
   }

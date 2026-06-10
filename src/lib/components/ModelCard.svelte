@@ -35,7 +35,7 @@
 
   {#if s.agiProgress !== null}
     <p class="mt-1 text-xs text-warn">
-      THE FINAL RUN. {Math.floor(s.agiProgress)}% — every rival is coming for you.
+      THE FINAL RUN. {Math.floor(s.agiProgress)}% — heat climbing +{AGI_RUN.heatPerSecond}/s, every rival is coming for you.
     </p>
     <div class="mt-2 h-2 overflow-hidden rounded-full bg-raise">
       <div class="h-full bg-you transition-all" style:width="{s.agiProgress}%"></div>
@@ -43,7 +43,7 @@
   {:else if s.training}
     <p class="mt-1 text-xs text-dim">
       Training Gen {s.gen + 1}... {Math.ceil(s.training.total - s.training.done)}s left.
-      {#if !s.opsec}Vulnerable to sabotage — no opsec team.{/if}
+      {#if !s.opsec}<span class="text-warn">Vulnerable to sabotage — no opsec team.</span>{/if}
     </p>
     <div class="mt-2 h-2 overflow-hidden rounded-full bg-raise">
       <div class="h-full bg-you transition-all" style:width="{(s.training.done / s.training.total) * 100}%"></div>
@@ -54,7 +54,7 @@
     </p>
   {:else}
     <p class="mt-1 text-xs text-dim">
-      Locks 70% of compute for {AGI_RUN.seconds}s, heat climbs, rivals attack relentlessly. Win the game.
+      Locks 70% of compute for {AGI_RUN.seconds}s, heat +{AGI_RUN.heatPerSecond}/s, rivals attack relentlessly. Win the game.
     </p>
   {/if}
 </section>

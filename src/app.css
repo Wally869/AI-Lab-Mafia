@@ -24,6 +24,12 @@ body {
   font-family: var(--font-display);
 }
 
+/* Kill double-tap zoom on controls without disabling pinch zoom. */
+button,
+input[type="range"] {
+  touch-action: manipulation;
+}
+
 @layer components {
   .panel {
     @apply rounded-lg border border-edge bg-panel-solid p-3;

@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { GameController } from '../controller.svelte';
   import { TIERS } from '../game/constants';
-  import { sellValue, tierIndex } from '../game/helpers';
+  import { settlementPreview, tierIndex } from '../game/helpers';
 
   let { g }: { g: GameController } = $props();
 
@@ -22,6 +22,6 @@
     </p>
   </div>
   <button class="btn shrink-0" onclick={g.sellCompany} disabled={g.state.ended}>
-    Sell company <span class="num text-ok">+{sellValue(g.state)} pts</span>
+    Sell company <span class="num text-ok">+{settlementPreview(g.state, 'sale')} pts</span>
   </button>
 </header>

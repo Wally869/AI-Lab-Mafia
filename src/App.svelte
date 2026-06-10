@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { GameController } from './lib/controller.svelte';
+  import { ECON } from './lib/game/constants';
   import ComputeCard from './lib/components/ComputeCard.svelte';
   import EndBanner from './lib/components/EndBanner.svelte';
   import EventCard from './lib/components/EventCard.svelte';
@@ -34,7 +35,8 @@
         onclick={g.answerPrompt}
         disabled={g.state.ended}
       >
-        Answer a prompt yourself <span class="num text-ok">+$3</span>
+        Answer a prompt yourself
+        <span class="num text-ok">+${Math.round(ECON.clickCash * g.state.gen * g.state.incomeMult)}</span>
       </button>
 
       <ComputeCard {g} />
@@ -54,7 +56,7 @@
   </div>
 
   <footer class="mt-auto pt-2 pb-2 text-center text-xs text-dim">
-    Tiers: 0 garage · 30 angel · 90 VC darling · 200 serial founder.
+    Tiers: 0 garage · 25 angel · 70 VC darling · 140 unicorn · 240 serial founder.
     Founder points persist in localStorage. Selling is winning, just smaller.
   </footer>
 </main>

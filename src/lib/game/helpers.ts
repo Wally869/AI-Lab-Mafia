@@ -1,5 +1,5 @@
-import { ECON, GENS, POINTS_MULT_DIVISOR, TIERS } from './constants';
-import type { GameState } from './types';
+import { ECON, GENS, POINTS_MULT_CAP, POINTS_MULT_DIVISOR, TIERS } from './constants';
+import type { GameState, OutcomeKind } from './types';
 
 export function tierIndex(points: number): number {
   let idx = 0;
@@ -10,7 +10,7 @@ export function tierIndex(points: number): number {
 }
 
 export function pointsMult(points: number): number {
-  return 1 + points / POINTS_MULT_DIVISOR;
+  return Math.min(POINTS_MULT_CAP, 1 + points / POINTS_MULT_DIVISOR);
 }
 
 export function totalCompute(s: GameState): number {
@@ -43,8 +43,29 @@ export function servedFraction(s: GameState): number {
   return d > 0 ? Math.min(1, inferenceCapacity(s) / d) : 1;
 }
 
+/** Revenue multiplier from the cheap↔costly pricing slider. */
+export function priceMult(s: GameState): number {
+  return ECON.pricingRevenueMin + (s.pricing / 100) * (ECON.pricingRevenueMax - ECON.pricingRevenueMin);
+}
+
+/**
+ * Passive market-share drift per second from pricing. Cheap pricing only
+ * attracts customers while you can actually serve them (≥ pricingServeFloor).
+ */
+export function pricingShareDrift(s: GameState): number {
+  if (s.pricing < 50) {
+    if (servedFraction(s) < ECON.pricingServeFloor) return 0;
+    return ((50 - s.pricing) / 50) * ECON.pricingCheapDriftMax;
+  }
+  if (s.pricing > 50) {
+    return -((s.pricing - 50) / 50) * ECON.pricingCostlyDriftMax;
+  }
+  return 0;
+}
+
 export function revenue(s: GameState): number {
-  const base = Math.min(inferenceCapacity(s), demand(s)) * GENS[s.gen - 1].price * s.incomeMult;
+  const base =
+    Math.min(inferenceCapacity(s), demand(s)) * GENS[s.gen - 1].price * s.incomeMult * priceMult(s);
   return s.heat >= ECON.heatRevenueThreshold ? base * ECON.heatRevenuePenalty : base;
 }
 
@@ -79,6 +100,23 @@ export function sellValue(s: GameState): number {
   );
 }
 
+/**
+ * Founder points paid for ending a run a given way. The single source of
+ * truth: every button preview and endGame() payout reads from here.
+ */
+export function settlementPreview(s: GameState, kind: OutcomeKind): number {
+  switch (kind) {
+    case 'agi':
+      return sellValue(s) + 100;
+    case 'consolidation':
+      return sellValue(s) + 50;
+    case 'sale':
+      return sellValue(s);
+    case 'loss':
+      return Math.floor(sellValue(s) * 0.5);
+  }
+}
+
 export function prCost(s: GameState): number {
   return 400 * s.gen * Math.pow(1.1, s.prUses);
 }
@@ -103,7 +141,11 @@ export function weakestRival(s: GameState) {
 
 export function acquisitionCost(s: GameState): number {
   const w = weakestRival(s);
-  return w ? Math.floor(w.share * w.defense * 1100) : 0;
+  if (!w) return 0;
+  // Floor stops dying rivals from being free; 2^n is the antitrust premium.
+  return Math.floor(
+    Math.max(w.share, ECON.acqCostShareFloor) * w.defense * 1100 * Math.pow(2, s.acquisitions),
+  );
 }
 
 export const fmt = (n: number): string => Math.floor(n).toLocaleString('en-US');

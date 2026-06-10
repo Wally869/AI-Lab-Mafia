@@ -44,16 +44,23 @@ the server tick: clients send intents (`runOp`, `buyBuilding`, ...), the server
 applies them and broadcasts state. The only nondeterminism is `Math.random()`;
 swap it for a seeded RNG carried on `GameState` if you need replay/verification.
 
-## Game systems (v0.5)
+## Game systems (v0.6)
 
 - Three currencies: cash (operations), research (progress), influence (dirty ops)
 - Compute allocation slider: inference (revenue) vs training (research)
-- Demand scales with model generation and market share; under-serving causes churn
+- Pricing slider: cheap (grow share, needs spare capacity) vs costly (max margin)
+- Demand scales with model generation and market share; under-serving causes churn,
+  and every lab leaks a trickle of share back to the contested open market
 - Model generations as committed training runs that lock compute; Gen 4 unlocks the AGI run
-- Heat: ops raise it, size raises it passively; 40+ taxes opex, 70+ taxes revenue, 100 = raid
-- Rivals with traits, retaliation, AGI progress, bankruptcy, and sabotage of your runs
+- Heat: ops raise it, size and acquisitions raise it passively; 40+ taxes opex,
+  70+ taxes revenue, 100 = raid
+- Rivals with traits, capped retaliation, AGI progress, bankruptcy, and sabotage of
+  your runs; they ignore labs below 8% share (except during your AGI run)
 - Risky bribery (catch chance scales with heat), choice events, structural buys
-- Founder points prestige: garage nobody → angel-backed → VC darling → serial founder
+- Acquisitions gated at 10% share with an escalating antitrust premium
+- Founder points prestige: garage nobody → angel-backed → VC darling → unicorn → serial founder
+- Three ways to win, all racing the rival AGI clock: finish the AGI run (+100 pts),
+  consolidate the industry by acquisition or 60% share (+50 pts), or sell out (full value)
 - Loss conditions: rival AGI, rival 60% monopoly, bankruptcy, heat 100
 
 ## Tuning

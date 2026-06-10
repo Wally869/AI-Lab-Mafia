@@ -2,13 +2,16 @@ import type { BuildingDef, GenSpec, OpKey, Tier, TrainSpec } from './types';
 
 export const TIERS: Tier[] = [
   { min: 0,   name: 'Garage nobody',  cash: 150,   influence: 0,  researchers: 0, lobbyists: 0, datacenters: 0, gen: 1, incomeMult: 1,    researchMult: 1,    defenseMult: 1 },
-  { min: 30,  name: 'Angel-backed',   cash: 2500,  influence: 10, researchers: 2, lobbyists: 0, datacenters: 0, gen: 1, incomeMult: 1.1,  researchMult: 1.1,  defenseMult: 1 },
-  { min: 90,  name: 'VC darling',     cash: 12000, influence: 40, researchers: 3, lobbyists: 1, datacenters: 1, gen: 1, incomeMult: 1.25, researchMult: 1.25, defenseMult: 1 },
-  { min: 200, name: 'Serial founder', cash: 30000, influence: 80, researchers: 4, lobbyists: 2, datacenters: 1, gen: 2, incomeMult: 1.5,  researchMult: 1.5,  defenseMult: 0.5 },
+  { min: 25,  name: 'Angel-backed',   cash: 2000,  influence: 8,  researchers: 2, lobbyists: 0, datacenters: 0, gen: 1, incomeMult: 1.1,  researchMult: 1.1,  defenseMult: 1 },
+  { min: 70,  name: 'VC darling',     cash: 8000,  influence: 25, researchers: 3, lobbyists: 1, datacenters: 1, gen: 1, incomeMult: 1.25, researchMult: 1.25, defenseMult: 1 },
+  { min: 140, name: 'Unicorn',        cash: 16000, influence: 45, researchers: 4, lobbyists: 1, datacenters: 1, gen: 1, incomeMult: 1.35, researchMult: 1.35, defenseMult: 0.75 },
+  { min: 240, name: 'Serial founder', cash: 22000, influence: 60, researchers: 4, lobbyists: 2, datacenters: 1, gen: 2, incomeMult: 1.5,  researchMult: 1.5,  defenseMult: 0.5 },
 ];
 
 /** Global multiplier on income and research per founder point. */
-export const POINTS_MULT_DIVISOR = 150;
+export const POINTS_MULT_DIVISOR = 200;
+/** Ceiling on the global founder-point multiplier. */
+export const POINTS_MULT_CAP = 3;
 
 export const GENS: GenSpec[] = [
   { demand: 12,  price: 1.5 },
@@ -28,10 +31,10 @@ export const TRAIN_RUNS: (TrainSpec | null)[] = [
 export const AGI_RUN = { research: 6000, cash: 150000, seconds: 75, lock: 0.7, heatPerSecond: 0.6 };
 
 export const BUILDINGS: BuildingDef[] = [
-  { id: 'rack',    name: 'GPU rack',        blurb: '+1 PFLOP',                                    baseCost: 60,    growth: 1.16, effect: 'ground',     amount: 1 },
-  { id: 'dc',      name: 'Datacenter',      blurb: '+8 PFLOPs',                                   baseCost: 900,   growth: 1.16, effect: 'ground',     amount: 8 },
-  { id: 'mega',    name: 'Megacluster',     blurb: '+50 PFLOPs',                                  baseCost: 12000, growth: 1.16, effect: 'ground',     amount: 50 },
-  { id: 'orbital', name: 'Orbital GPU farm', blurb: '+300 PFLOPs · tiny opex · 15% launch failure', baseCost: 90000, growth: 1.3,  effect: 'orbital',    amount: 300, minGen: 3, failChance: 0.15 },
+  { id: 'rack',    name: 'GPU rack',        blurb: '+1 PFLOP · $0.4/s opex',                      baseCost: 60,    growth: 1.16, effect: 'ground',     amount: 1 },
+  { id: 'dc',      name: 'Datacenter',      blurb: '+8 PFLOPs · $3.2/s opex',                     baseCost: 900,   growth: 1.16, effect: 'ground',     amount: 8 },
+  { id: 'mega',    name: 'Megacluster',     blurb: '+50 PFLOPs · $20/s opex',                     baseCost: 12000, growth: 1.16, effect: 'ground',     amount: 50 },
+  { id: 'orbital', name: 'Orbital GPU farm', blurb: '+300 PFLOPs · $24/s opex · 15% launch failure', baseCost: 90000, growth: 1.3,  effect: 'orbital',    amount: 300, minGen: 3, failChance: 0.15 },
   { id: 'rsr',     name: 'Researcher',      blurb: '+1 research/s · $1.5/s salary',               baseCost: 300,   growth: 1.22, effect: 'researcher', amount: 1 },
   { id: 'lob',     name: 'Lobbyist',        blurb: '+0.4 influence/s · $2/s salary',              baseCost: 500,   growth: 1.22, effect: 'lobbyist',   amount: 1 },
 ];
@@ -78,6 +81,28 @@ export const ECON = {
   /** Passive heat per second per share-point above this. */
   scrutinyShareFloor: 30,
   scrutinyHeatPerPoint: 0.01,
+  /** Pricing slider: revenue multiplier at full-cheap (0) and full-costly (100). */
+  pricingRevenueMin: 0.65,
+  pricingRevenueMax: 1.35,
+  /** Max share drift %/s at full-cheap (needs serve floor) and full-costly. */
+  pricingCheapDriftMax: 0.05,
+  pricingCostlyDriftMax: 0.03,
+  /** Cheap pricing only grows share while serving at least this fraction of demand. */
+  pricingServeFloor: 0.95,
+  /** Fraction of each lab's share that churns back to the open market per second. */
+  openMarketChurn: 0.0008,
+  /** Marketing blitz efficiency when drawing the shortfall from rivals. */
+  blitzRivalEfficiency: 0.5,
+  /** Rivals start attacking the player at this share, at full pressure rampShare later. */
+  attackShareFloor: 8,
+  attackShareRamp: 7,
+  /** Retaliation never exceeds max(floor, fraction × share the op took). */
+  retaliationCapFraction: 0.75,
+  retaliationCapFloorPct: 0.5,
+  /** Acquisitions: share gate, cost floor (in share points), and passive heat per buy. */
+  acqShareGate: 10,
+  acqCostShareFloor: 8,
+  acqHeatPerSecond: 0.05,
 };
 
 export const RIVAL_DEFS = [

@@ -39,6 +39,7 @@
         onclick={() => g.setTarget(i)}
         aria-pressed={g.state.targetIdx === i}
         disabled={dead}
+        title="{rival.trait} — retaliates {Math.round(rival.retaliation * 100)}% of the time, defense ×{rival.defense}"
       >
         <div class="mb-1 flex justify-between text-[13px]">
           <span class:line-through={dead} class:text-dim={dead}>

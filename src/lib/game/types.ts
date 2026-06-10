@@ -42,8 +42,12 @@ export interface LogEntry {
   text: string;
 }
 
+/** How a run ended. Everything except 'loss' counts as a win. */
+export type OutcomeKind = 'agi' | 'consolidation' | 'sale' | 'loss';
+
 export interface Outcome {
   won: boolean;
+  kind: OutcomeKind;
   text: string;
   /** Founder points earned by this run's ending. */
   gained: number;
@@ -82,6 +86,8 @@ export interface GameState {
   // Player choices
   /** Percent of effective compute allocated to inference [0,100]. */
   alloc: number;
+  /** Pricing position [0,100]: 0 = cheap (grow share), 100 = costly (max margin). */
+  pricing: number;
   targetIdx: number;
 
   // Multipliers & flags
@@ -98,6 +104,8 @@ export interface GameState {
   // Escalating costs
   scienceCosts: [number, number];
   prUses: number;
+  /** Rivals absorbed this run; drives the antitrust premium and passive heat. */
+  acquisitions: number;
 
   // Timers & counters (in whole seconds / ticks)
   shortageT: number;
@@ -108,6 +116,11 @@ export interface GameState {
   lastSabBlockTick: number;
   heatWarned: boolean;
   milestones: Record<number, boolean>;
+  /** Highest heat reached this run (for the shareable result card). */
+  peakHeat: number;
+  /** Run number and starting tier, frozen at creation for the result card. */
+  runNumber: number;
+  tierName: string;
 
   buildings: Building[];
   cooldowns: Record<OpKey, number>;

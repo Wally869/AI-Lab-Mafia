@@ -13,22 +13,29 @@
     key: OpKey;
     title: string;
     blurb: string;
+    /** Base heat cost, shown after the heat-gain multiplier is applied. */
+    heat?: number;
   }
 
   const ops: OpRow[] = [
-    { key: 'pr',    title: 'Marketing blitz', blurb: 'Grab open market, scales with gen · +2 heat' },
-    { key: 'poach', title: 'Poach team',      blurb: 'Steal share + research · +6 heat' },
-    { key: 'spy',   title: 'Espionage',       blurb: 'Steal research, target AGI −3 · +10 heat' },
-    { key: 'smear', title: 'Smear',           blurb: 'Target bleeds share · +12 heat' },
-    { key: 'sab',   title: 'Sabotage run',    blurb: 'Target AGI −8 · +15 heat' },
+    { key: 'pr',    title: 'Marketing blitz', blurb: 'Grab market share, scales with gen', heat: 2 },
+    { key: 'poach', title: 'Poach team',      blurb: 'Steal share + research', heat: 6 },
+    { key: 'spy',   title: 'Espionage',       blurb: 'Steal research, target AGI −3', heat: 10 },
+    { key: 'smear', title: 'Smear',           blurb: 'Target bleeds share', heat: 12 },
+    { key: 'sab',   title: 'Sabotage run',    blurb: 'Target AGI −8', heat: 15 },
     { key: 'bribe', title: 'Bribe regulator', blurb: '−30 heat... if it works' },
-    { key: 'acq',   title: 'Acquire weakest', blurb: 'Absorb them · +20 heat · income +15%' },
+    { key: 'acq',   title: 'Acquire weakest', blurb: 'Absorb them · needs 10% share · income +15%', heat: 20 },
   ];
 
   function costLabel(key: OpKey): string {
     if (key === 'pr') return `$${fmt(prCost(g.state))}`;
     if (key === 'acq') return `${OP_INFLUENCE_COSTS.acq} inf + $${fmt(acquisitionCost(g.state))}`;
     return `${OP_INFLUENCE_COSTS[key]} inf`;
+  }
+
+  function heatLabel(base: number): string {
+    const v = base * g.state.heatGainMult;
+    return Number.isInteger(v) ? String(v) : v.toFixed(1);
   }
 </script>
 
@@ -42,7 +49,9 @@
       <button class="btn" onclick={() => g.runOp(op.key)} disabled={!canRunOp(g.state, op.key)}>
         {op.title} — <span class="num">{costLabel(op.key)}</span>
         {#if g.state.cooldowns[op.key] > 0}<span class="num text-dim"> ({g.state.cooldowns[op.key]}s)</span>{/if}
-        <span class="block text-xs text-mut">{op.blurb}</span>
+        <span class="block text-xs text-mut">
+          {op.blurb}{#if op.heat !== undefined}&nbsp;· +{heatLabel(op.heat)} heat{/if}
+        </span>
       </button>
     {/each}
 
