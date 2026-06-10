@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #0b0e14;
+  --color-panel: #12172250;
+  --color-panel-solid: #121722;
+  --color-raise: #1a2133;
+  --color-edge: #242d42;
+  --color-txt: #e8eaf2;
+  --color-mut: #8a93a8;
+  --color-dim: #59627a;
+  --color-you: #8d7bf5;
+  --color-ok: #7fb53a;
+  --color-warn: #d6952f;
+  --color-bad: #e0604e;
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+body {
+  background-color: var(--color-ink);
+  background-image: radial-gradient(ellipse 80% 50% at 50% -10%, #1a2133aa, transparent);
+  color: var(--color-txt);
+  font-family: var(--font-display);
+}
+
+@layer components {
+  .panel {
+    @apply rounded-lg border border-edge bg-panel-solid p-3;
+  }
+  .btn {
+    @apply rounded-md border border-edge bg-raise px-3 py-2 text-left text-[13px] leading-snug
+      transition-colors hover:border-you/60 focus-visible:outline-2 focus-visible:outline-you
+      disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-edge;
+  }
+  .label {
+    @apply text-[11px] uppercase tracking-[0.14em] text-dim;
+  }
+  .num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
