@@ -14,28 +14,25 @@
 
 <section aria-label="Hardware and payroll" class="mb-3">
   <h2 class="label mb-1.5">Hardware &amp; payroll</h2>
-  <div class="grid grid-cols-2 gap-2 lg:grid-cols-3">
+  <div class="grid grid-cols-2 gap-2">
     {#each BUILDINGS as def, i (def.id)}
-      <div class="panel flex flex-col justify-between gap-2">
-        <div>
-          <p class="text-[13px] font-medium">{def.name}</p>
-          <p class="text-xs text-mut">
-            {def.blurb} · <span class="num">{g.state.buildings[i].count}</span> owned
-          </p>
-        </div>
-        <button
-          class="btn"
-          onclick={() => g.buyBuilding(i)}
-          disabled={g.state.ended || g.state.cash < price(i) || (def.minGen !== undefined && g.state.gen < def.minGen)}
-        >
+      <button
+        class="btn"
+        onclick={() => g.buyBuilding(i)}
+        disabled={g.state.ended || g.state.cash < price(i) || (def.minGen !== undefined && g.state.gen < def.minGen)}
+      >
+        <span class="flex items-baseline justify-between gap-2">
+          <span class="font-medium">{def.name}</span>
           {#if def.minGen !== undefined && g.state.gen < def.minGen}
-            Needs Gen {def.minGen}
+            <span class="text-xs text-dim">Needs Gen {def.minGen}</span>
           {:else}
-            {def.effect === 'researcher' || def.effect === 'lobbyist' ? 'Hire' : def.effect === 'orbital' ? 'Launch' : 'Buy'}
-            — $<span class="num">{fmt(price(i))}</span>
+            <span class="num">${fmt(price(i))}</span>
           {/if}
-        </button>
-      </div>
+        </span>
+        <span class="block text-xs text-mut">
+          {def.blurb} · <span class="num">{g.state.buildings[i].count}</span> owned
+        </span>
+      </button>
     {/each}
   </div>
 </section>

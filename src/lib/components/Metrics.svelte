@@ -36,18 +36,16 @@
     <p class="num text-xl font-medium">{fmt(g.state.influence)}</p>
     <p class="num text-xs text-mut">{influenceRate(g.state).toFixed(1)}/s</p>
   </div>
-  <div class="panel">
-    <p class="label">Heat</p>
+  <div class="panel" title={heatMsg}>
+    <div class="flex items-baseline justify-between gap-2">
+      <p class="label">Heat</p>
+      <p class="num text-xs text-mut">
+        {heat >= 70 ? '−25% revenue!' : heat >= 40 ? '+25% opex!' : '100 = game over'}
+      </p>
+    </div>
     <p class="num text-xl font-medium">{Math.round(heat)}</p>
-    <p class="num text-xs text-mut">
-      {heat >= 70 ? '−25% revenue!' : heat >= 40 ? '+25% opex!' : '100 = game over'}
-    </p>
+    <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-raise" role="meter" aria-valuenow={Math.round(heat)} aria-valuemin="0" aria-valuemax="100" aria-label="Regulator heat">
+      <div class="h-full transition-all duration-500" style:width="{heat}%" style:background={heatColor}></div>
+    </div>
   </div>
 </section>
-
-<div class="mb-4">
-  <div class="h-2 overflow-hidden rounded-full bg-raise" role="meter" aria-valuenow={Math.round(heat)} aria-valuemin="0" aria-valuemax="100" aria-label="Regulator heat">
-    <div class="h-full transition-all duration-500" style:width="{heat}%" style:background={heatColor}></div>
-  </div>
-  <p class="mt-1 text-xs text-dim">{heatMsg}</p>
-</div>

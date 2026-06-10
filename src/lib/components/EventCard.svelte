@@ -8,7 +8,11 @@
 </script>
 
 {#if ev && g.state.event}
-  <section class="mb-3 rounded-lg border border-warn/50 bg-warn/10 p-3" aria-live="polite" aria-label="Decision required">
+  <section
+    class="fixed right-4 bottom-4 z-50 w-80 max-w-[calc(100vw-2rem)] rounded-lg border border-warn/50 bg-panel-solid p-3 shadow-xl shadow-ink/60"
+    aria-live="polite"
+    aria-label="Decision required"
+  >
     <p class="mb-2 text-sm font-medium text-warn">
       {ev.title}
       <span class="num text-xs font-normal text-warn/70">({g.state.event.secondsLeft}s)</span>

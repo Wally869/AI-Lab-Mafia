@@ -37,7 +37,7 @@
     Family business · target:
     <span class="font-medium normal-case tracking-normal text-txt">{target?.name ?? '—'}</span>
   </h2>
-  <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+  <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
     {#each ops as op (op.key)}
       <button class="btn" onclick={() => g.runOp(op.key)} disabled={!canRunOp(g.state, op.key)}>
         {op.title} — <span class="num">{costLabel(op.key)}</span>
