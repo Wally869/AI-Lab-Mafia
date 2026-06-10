@@ -10,6 +10,7 @@
   import LogPanel from './lib/components/LogPanel.svelte';
   import Metrics from './lib/components/Metrics.svelte';
   import ModelCard from './lib/components/ModelCard.svelte';
+  import Onboarding from './lib/components/Onboarding.svelte';
   import OpsPanel from './lib/components/OpsPanel.svelte';
   import RaceBoard from './lib/components/RaceBoard.svelte';
   import SciencePanel from './lib/components/SciencePanel.svelte';
@@ -17,7 +18,8 @@
   const g = new GameController();
 
   onMount(() => {
-    g.start();
+    // The sim only starts ticking once the lab is founded.
+    if (!g.showOnboarding) g.start();
     return () => g.stop();
   });
 </script>
@@ -27,6 +29,9 @@
   <Metrics {g} />
   <EndBanner {g} />
   <EventCard {g} />
+  {#if g.showOnboarding}
+    <Onboarding {g} />
+  {/if}
 
   <div class="grid grid-cols-1 items-start gap-x-4 lg:grid-cols-2 xl:grid-cols-3">
     <div>

@@ -136,6 +136,8 @@ export interface GameState {
 export interface FounderMeta {
   points: number;
   runs: number;
+  /** Player-chosen lab name; empty until onboarding completes. */
+  labName: string;
 }
 
 export interface Tier {

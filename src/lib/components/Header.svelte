@@ -21,7 +21,10 @@
       {#if next}· next tier in <span class="num">{next.min - g.meta.points}</span> pts{:else}· max tier{/if}
     </p>
   </div>
-  <button class="btn shrink-0" onclick={g.sellCompany} disabled={g.state.ended}>
-    Sell company <span class="num text-ok">+{settlementPreview(g.state, 'sale')} pts</span>
-  </button>
+  <div class="flex shrink-0 items-center gap-2">
+    <button class="btn" onclick={g.sellCompany} disabled={g.state.ended}>
+      Sell company <span class="num text-ok">+{settlementPreview(g.state, 'sale')} pts</span>
+    </button>
+    <button class="btn px-3" onclick={() => (g.showOnboarding = true)} aria-label="How to play">?</button>
+  </div>
 </header>

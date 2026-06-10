@@ -16,7 +16,8 @@
     <div class="rounded-md border border-you/50 bg-panel-solid px-3 py-2">
       <div class="mb-1 flex justify-between text-[13px]">
         <span class="font-medium">
-          Your lab <span class="font-normal text-dim">· gen {g.state.gen}{g.state.opsec ? ' · opsec' : ''}</span>
+          {g.meta.labName || 'Your lab'}
+          <span class="font-normal text-dim">· gen {g.state.gen}{g.state.opsec ? ' · opsec' : ''}</span>
         </span>
         <span class="num text-mut">
           {g.state.share.toFixed(1)}% · AGI {Math.floor(g.state.agiProgress ?? 0)}%

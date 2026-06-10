@@ -23,13 +23,17 @@ function loadMeta(): FounderMeta {
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<FounderMeta>;
       if (typeof parsed.points === 'number') {
-        return { points: parsed.points, runs: parsed.runs ?? 1 };
+        return {
+          points: parsed.points,
+          runs: parsed.runs ?? 1,
+          labName: typeof parsed.labName === 'string' ? parsed.labName : '',
+        };
       }
     }
   } catch {
     // Private mode or corrupted storage: fall through to defaults.
   }
-  return { points: 0, runs: 1 };
+  return { points: 0, runs: 1, labName: '' };
 }
 
 function saveMeta(meta: FounderMeta): void {
@@ -53,6 +57,8 @@ export function resetFounder(): void {
 export class GameController {
   meta = $state<FounderMeta>(loadMeta());
   state = $state<GameState>(createGame(loadMeta()));
+  /** True until the lab is named; also reopenable later as a help panel. */
+  showOnboarding = $state(loadMeta().labName === '');
 
   #timers: ReturnType<typeof setInterval>[] = [];
 
@@ -101,5 +107,20 @@ export class GameController {
 
   restart = (): void => {
     this.state = createGame(this.meta);
+  };
+
+  /** Name (or rename) the lab and make sure the sim is running. */
+  completeOnboarding = (name: string): void => {
+    const trimmed = name.trim().slice(0, 24);
+    if (trimmed.length === 0) return;
+    const renamed = trimmed !== this.meta.labName;
+    this.meta.labName = trimmed;
+    saveMeta(this.meta);
+    // Before the first tick, regenerate so the founding log carries the name.
+    if (renamed && this.state.ticks === 0 && !this.state.ended) {
+      this.state = createGame(this.meta);
+    }
+    this.showOnboarding = false;
+    this.start();
   };
 }

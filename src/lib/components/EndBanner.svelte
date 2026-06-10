@@ -27,7 +27,7 @@
     const o = s.outcome!;
     const acq = s.acquisitions > 0 ? `${s.acquisitions} rival${s.acquisitions > 1 ? 's' : ''} absorbed · ` : '';
     return [
-      `AI Lab Mafia — Run #${s.runNumber} (${s.tierName})`,
+      `AI Lab Mafia — ${g.meta.labName || 'Your lab'}, run #${s.runNumber} (${s.tierName})`,
       `${HEADLINES[o.kind]} in ${mmss(s.ticks)} — Gen ${s.gen} · ${s.share.toFixed(1)}% share · peak heat ${Math.round(s.peakHeat)}`,
       `${acq}+${o.gained} founder pts`,
       'https://wally869.github.io/AI-Lab-Mafia/',

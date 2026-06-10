@@ -112,7 +112,7 @@ export function createGame(meta: FounderMeta): GameState {
 
   pushLog(
     state,
-    `Run #${meta.runs} as ${tier.name} (${meta.points} pts). Reminder: any lab reaching ${MONOPOLY_SHARE}% share — including rivals — ends the game.`,
+    `${meta.labName || 'Your lab'} is founded. Run #${meta.runs} as ${tier.name} (${meta.points} pts). Reminder: any lab reaching ${MONOPOLY_SHARE}% share — including rivals — ends the game.`,
   );
   return state;
 }
