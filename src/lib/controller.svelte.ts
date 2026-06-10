@@ -40,6 +40,16 @@ function saveMeta(meta: FounderMeta): void {
   }
 }
 
+/**
+ * Wipe persisted founder progress and restart fresh. Exposed on `window` as
+ * a dev helper; also reachable via the `?reset` URL param. Navigates to the
+ * bare path (rather than reloading) so `?reset` can't loop.
+ */
+export function resetFounder(): void {
+  localStorage.removeItem(STORAGE_KEY);
+  location.replace(location.pathname);
+}
+
 export class GameController {
   meta = $state<FounderMeta>(loadMeta());
   state = $state<GameState>(createGame(loadMeta()));
