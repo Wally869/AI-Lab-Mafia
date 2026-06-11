@@ -30,12 +30,33 @@ src/lib/game/          Pure simulation — no DOM, no timers, no Svelte
   sim.ts               createGame, player actions, tickSecond, tickRivals
 
 src/lib/controller.svelte.ts   Svelte 5 runes wrapper: owns reactive state,
-                               drives the three interval loops, persists founder
-                               points to localStorage, settles run outcomes
+                               drives the interval loops, settles run outcomes,
+                               persists founder points and autosaves the active
+                               run to localStorage (restored on reload)
 
+src/lib/ui.svelte.ts   UI-only state: active tab, open sheet, toast, and
+                       presentation settings (accent hue, juice, density,
+                       grid/list cards, number format), persisted separately
+src/lib/opmeta.ts      Shared display metadata for dirty ops
 src/lib/components/    Dumb view components; render state, forward intents
-src/App.svelte         Layout
+src/App.svelte         Responsive shell
 ```
+
+## UI
+
+One component set, two layouts on a 768px breakpoint (design system in
+`src/app.css`, ported from the mobile redesign in `refs/`):
+
+- **Mobile**: full-bleed app — app bar, resource + race strips, a stock-style
+  wire-taps ticker (tap for the full feed), tabbed body (Lab / Build / Ops /
+  Race), dock with the tap-to-earn prompt button and event alerts, bottom
+  sheets for events, target picking, company (sell), and settings.
+- **Desktop (≥768px)**: same header and ticker, then every panel at once —
+  4 columns at ≥1200px (Lab + dock | Build | Ops | Race), height-locked so the
+  page never scrolls. Sheets render as centered modals; the tab bar disappears.
+
+`refs/port-plan.md` documents the feature-parity contract the redesign was
+built against.
 
 Every sim function has the shape `(state: GameState, ...args) => void` and mutates
 the state it is given. The controller owns the only `$state` instance, so Svelte's

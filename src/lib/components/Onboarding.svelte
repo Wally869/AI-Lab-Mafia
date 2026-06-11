@@ -18,57 +18,28 @@
   let name = $state(g.meta.labName || suggest());
 </script>
 
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-ink/80 p-4 backdrop-blur-sm">
-  <div class="panel max-h-full w-full max-w-lg overflow-y-auto p-5" role="dialog" aria-modal="true" aria-label="How to play">
-    <h2 class="font-display text-xl font-bold tracking-tight">
-      AI Lab Mafia <span class="text-dim">/ race to AGI</span>
-    </h2>
-    <p class="mt-1 text-sm text-mut">
-      Grow an AI lab from a garage to an empire — and finish your AGI run before any rival finishes theirs.
-    </p>
+<div class="onboarding">
+  <div class="panel" role="dialog" aria-modal="true" aria-label="How to play">
+    <h3><b>AI LAB MAFIA</b> <span>/ race to AGI</span></h3>
+    <p class="lead">Grow an AI lab from a garage to an empire — and finish your AGI run before any rival finishes theirs.</p>
 
-    <ul class="mt-4 space-y-2 text-[13px] leading-snug text-mut">
-      <li>
-        <span class="font-medium text-txt">Earn.</span>
-        Slide compute toward inference for cash, toward training for research.
-        Cheap pricing grows market share — if you can serve the demand.
-      </li>
-      <li>
-        <span class="font-medium text-txt">Advance.</span>
-        Research buys upgrades and trains the next model generation. Gen 4 unlocks the AGI run.
-      </li>
-      <li>
-        <span class="font-medium text-txt">Fight dirty.</span>
-        Poach, smear, sabotage, bribe. Dirty ops and sheer size raise heat — at 100, you're raided.
-      </li>
-      <li>
-        <span class="font-medium text-txt">Win.</span>
-        Achieve AGI, hit 60% market share, or absorb every rival.
-        Selling out is winning, just smaller — and founder points make every next run stronger.
-      </li>
+    <ul>
+      <li><b>Earn.</b> Slide compute toward inference for cash, toward training for research. Cheap pricing grows market share — if you can serve the demand.</li>
+      <li><b>Advance.</b> Research buys upgrades and trains the next model generation. Gen 4 unlocks the AGI run.</li>
+      <li><b>Fight dirty.</b> Poach, smear, sabotage, bribe. Dirty ops and sheer size raise heat — at 100, you're raided.</li>
+      <li><b>Win.</b> Achieve AGI, hit 60% market share, or absorb every rival. Selling out is winning, just smaller.</li>
+      <li><b>Prestige.</b> Every ending banks founder points. They carry over, raise your starting tier, and boost every future company — sell, climb, come back meaner.</li>
     </ul>
 
-    <label class="label mt-5 block" for="lab-name">Name your lab</label>
-    <div class="mt-1.5 flex gap-2">
-      <input
-        id="lab-name"
-        type="text"
-        maxlength="24"
-        bind:value={name}
-        class="w-full rounded-md border border-edge bg-raise px-3 py-2 text-[14px] text-txt focus-visible:outline-2 focus-visible:outline-you"
-      />
-      <button class="btn shrink-0" onclick={() => (name = suggest())} aria-label="Random lab name">🎲</button>
+    <label class="field-label" for="lab-name">Name your lab</label>
+    <div class="name-row">
+      <input id="lab-name" type="text" maxlength="24" bind:value={name} />
+      <button class="dice" onclick={() => (name = suggest())} aria-label="Random lab name">🎲</button>
     </div>
 
-    <button
-      class="btn mt-4 w-full py-3 text-center text-[15px] font-medium"
-      disabled={name.trim().length === 0}
-      onclick={() => g.completeOnboarding(name)}
-    >
+    <button class="btn full" disabled={name.trim().length === 0} onclick={() => g.completeOnboarding(name)}>
       Found {name.trim() || 'the company'}
     </button>
-    <p class="mt-2 text-center text-xs text-dim">
-      Progress persists in your browser. First runs usually end in a sale — that's the point.
-    </p>
+    <p class="fine">Progress persists in your browser.</p>
   </div>
 </div>

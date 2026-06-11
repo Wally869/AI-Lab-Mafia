@@ -1,67 +1,107 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { fade } from 'svelte/transition';
   import { GameController } from './lib/controller.svelte';
-  import { ECON } from './lib/game/constants';
-  import ComputeCard from './lib/components/ComputeCard.svelte';
-  import EndBanner from './lib/components/EndBanner.svelte';
-  import EventCard from './lib/components/EventCard.svelte';
-  import HardwarePanel from './lib/components/HardwarePanel.svelte';
-  import Header from './lib/components/Header.svelte';
-  import LogPanel from './lib/components/LogPanel.svelte';
-  import Metrics from './lib/components/Metrics.svelte';
-  import ModelCard from './lib/components/ModelCard.svelte';
+  import AppBar from './lib/components/AppBar.svelte';
+  import BuildTab from './lib/components/BuildTab.svelte';
+  import Dock from './lib/components/Dock.svelte';
+  import EndOverlay from './lib/components/EndOverlay.svelte';
+  import LabTab from './lib/components/LabTab.svelte';
   import Onboarding from './lib/components/Onboarding.svelte';
-  import OpsPanel from './lib/components/OpsPanel.svelte';
-  import RaceBoard from './lib/components/RaceBoard.svelte';
-  import SciencePanel from './lib/components/SciencePanel.svelte';
+  import OpsTab from './lib/components/OpsTab.svelte';
+  import RaceStrip from './lib/components/RaceStrip.svelte';
+  import RaceTab from './lib/components/RaceTab.svelte';
+  import ResourceBar from './lib/components/ResourceBar.svelte';
+  import SheetHost from './lib/components/SheetHost.svelte';
+  import TabBar from './lib/components/TabBar.svelte';
+  import Ticker from './lib/components/Ticker.svelte';
+  import { ui } from './lib/ui.svelte';
 
   const g = new GameController();
 
+  // Mobile: tabbed single column. Desktop: every panel visible in a grid.
+  const mq = window.matchMedia('(min-width: 768px)');
+  let isDesktop = $state(mq.matches);
+
+  let bodyEl = $state<HTMLDivElement>();
+  $effect(() => {
+    void ui.tab;
+    bodyEl?.scrollTo(0, 0);
+  });
+
+  $effect(() => {
+    document.documentElement.style.setProperty('--acc-h', String(ui.settings.accH));
+    document.body.dataset.density = ui.settings.density;
+  });
+
+  // Sheets don't outlive what they show: event resolved or run over → close.
+  $effect(() => {
+    if (ui.sheet?.kind === 'event' && !g.state.event) ui.close();
+    if (g.state.ended && ui.sheet && ui.sheet.kind !== 'settings') ui.close();
+  });
+
   onMount(() => {
+    const onChange = (e: MediaQueryListEvent) => (isDesktop = e.matches);
+    mq.addEventListener('change', onChange);
     // The sim only starts ticking once the lab is founded.
     if (!g.showOnboarding) g.start();
-    return () => g.stop();
+    return () => {
+      mq.removeEventListener('change', onChange);
+      g.stop();
+    };
   });
 </script>
 
-<main class="mx-auto flex min-h-screen max-w-screen-2xl flex-col px-4 py-3">
-  <Header {g} />
-  <Metrics {g} />
-  <EndBanner {g} />
-  <EventCard {g} />
+<div class="app">
+  <AppBar {g} />
+  <div class="strips">
+    <ResourceBar {g} />
+    <RaceStrip {g} />
+  </div>
+  <Ticker {g} />
+
+  {#if isDesktop}
+    <div class="body desk">
+      <div class="col">
+        <Dock {g} />
+        <LabTab {g} />
+      </div>
+      <div class="col">
+        <BuildTab {g} />
+      </div>
+      <div class="col">
+        <OpsTab {g} />
+      </div>
+      <div class="col">
+        <RaceTab {g} />
+      </div>
+    </div>
+  {:else}
+    <div class="body" bind:this={bodyEl}>
+      {#if ui.tab === 'lab'}
+        <LabTab {g} />
+      {:else if ui.tab === 'build'}
+        <BuildTab {g} />
+      {:else if ui.tab === 'ops'}
+        <OpsTab {g} />
+      {:else}
+        <RaceTab {g} />
+      {/if}
+    </div>
+
+    <Dock {g} />
+    <TabBar />
+  {/if}
+
+  <SheetHost {g} />
+
+  {#if ui.toastText}
+    <div class="toast" transition:fade={{ duration: 150 }}>{ui.toastText}</div>
+  {/if}
+
+  <EndOverlay {g} />
+
   {#if g.showOnboarding}
     <Onboarding {g} />
   {/if}
-
-  <div class="grid grid-cols-1 items-start gap-x-4 lg:grid-cols-2 xl:grid-cols-3">
-    <div>
-      <button
-        class="btn mb-3 w-full py-3 text-center text-[15px] font-medium"
-        onclick={g.answerPrompt}
-        disabled={g.state.ended}
-      >
-        Answer a prompt yourself
-        <span class="num text-ok">+${Math.round(ECON.clickCash * g.state.gen * g.state.incomeMult)}</span>
-      </button>
-
-      <ComputeCard {g} />
-      <ModelCard {g} />
-      <SciencePanel {g} />
-    </div>
-
-    <div>
-      <HardwarePanel {g} />
-      <OpsPanel {g} />
-    </div>
-
-    <div>
-      <RaceBoard {g} />
-      <LogPanel {g} />
-    </div>
-  </div>
-
-  <footer class="mt-auto pt-2 pb-2 text-center text-xs text-dim">
-    Tiers: 0 garage · 25 angel · 70 VC darling · 140 unicorn · 240 serial founder.
-    Founder points persist in localStorage. Selling is winning, just smaller.
-  </footer>
-</main>
+</div>

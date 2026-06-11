@@ -122,6 +122,9 @@ export const MONOPOLY_SHARE = 60;
 export const SHARE_MILESTONES = [10, 20, 30, 40, 50];
 export const MILESTONE_INFLUENCE = 15;
 
+/** Seconds before an event auto-resolves to its last option. */
+export const EVENT_SECONDS = 18;
+
 export const TICK_MS = 1000;
 export const RIVAL_TICK_MS = 5000;
 export const EVENT_TICK_MS = 16000;

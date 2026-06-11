@@ -1,15 +1,10 @@
 <script lang="ts">
+  import { fade } from 'svelte/transition';
   import type { GameController } from '../controller.svelte';
 
   let { g }: { g: GameController } = $props();
 
   let copied = $state(false);
-
-  const tone = $derived(
-    g.state.outcome?.won
-      ? 'border-ok bg-ok/10 text-ok'
-      : 'border-bad bg-bad/10 text-bad',
-  );
 
   const HEADLINES = {
     agi: '🏆 AGI ACHIEVED',
@@ -43,16 +38,16 @@
 </script>
 
 {#if g.state.outcome}
-  <div class="mb-3 rounded-lg border p-3 text-sm font-medium {tone}" role="status">
-    {g.state.outcome.text}
-    <span class="num">(+{g.state.outcome.gained} founder pts)</span>
-  </div>
-  <div class="mb-3 flex gap-2">
-    <button class="btn flex-1 text-center font-medium" onclick={g.restart}>
-      Found a new company
-    </button>
-    <button class="btn shrink-0 text-center" onclick={copyResult}>
-      {copied ? 'Copied!' : 'Copy result'}
-    </button>
+  {@const o = g.state.outcome}
+  <div class="overlay {o.won ? 'win' : 'lose'}" role="status" transition:fade={{ duration: 220 }}>
+    <div class="end-card">
+      <div class="headline">{HEADLINES[o.kind]}</div>
+      <p>{o.text}</p>
+      <div class="end-points num">+{o.gained} founder pts</div>
+      <div class="actions">
+        <button class="btn full" onclick={g.restart}>Found a new company</button>
+        <button class="btn sm" onclick={copyResult}>{copied ? 'Copied!' : 'Copy result'}</button>
+      </div>
+    </div>
   </div>
 {/if}

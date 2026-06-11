@@ -8,6 +8,7 @@ import {
   AGI_RUN,
   BUILDINGS,
   ECON,
+  EVENT_SECONDS,
   MILESTONE_INFLUENCE,
   MONOPOLY_SHARE,
   OPEN_MARKET_START,
@@ -419,7 +420,7 @@ export function resolveEvent(s: GameState, optionIndex: number): void {
 
 export function maybeSpawnEvent(s: GameState): void {
   if (s.ended || s.event || Math.random() > 0.5) return;
-  s.event = { index: Math.floor(Math.random() * EVENTS.length), secondsLeft: 18 };
+  s.event = { index: Math.floor(Math.random() * EVENTS.length), secondsLeft: EVENT_SECONDS };
 }
 
 // ---------------------------------------------------------------------------
