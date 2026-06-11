@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Lab Mafia — Mobile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="mobile/app.css">
+</head>
+<body data-density="cozy">
+  <div id="stage">
+    <div class="phone" id="phone">
+      <div class="notch"></div>
+      <div class="screen">
+        <div class="statusbar">
+          <span class="num" id="clock">9:41</span>
+          <span class="icons">
+            <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+            <svg width="16" height="11" viewBox="0 0 16 11" fill="none"><path d="M8 9.5l1.6-2A4.4 4.4 0 008 6.8a4.4 4.4 0 00-1.6.7L8 9.5z" fill="currentColor"/><path d="M3 5.2A7.2 7.2 0 018 3.4a7.2 7.2 0 015 1.8M1 3A10 10 0 018 .4 10 10 0 0115 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="1" y="1" width="21" height="10" rx="3" stroke="currentColor" stroke-opacity=".5" stroke-width="1"/><rect x="3" y="3" width="16" height="6" rx="1.5" fill="currentColor"/><rect x="23.5" y="4" width="1.6" height="4" rx=".8" fill="currentColor" fill-opacity=".5"/></svg>
+          </span>
+        </div>
+
+        <div class="appbar">
+          <button class="pts" id="ptsBtn">
+            <span class="tri">▲</span>
+            <span><span class="pv num" id="ptsVal">1393</span><span class="pl">founder pts</span></span>
+          </button>
+          <span style="flex:1"></span>
+          <button class="iconbtn" id="gearBtn" aria-label="Settings">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H2a2 2 0 110-4h.09A1.65 1.65 0 004.6 8a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V2a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H22a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          </button>
+        </div>
+
+        <div class="res" id="res"></div>
+        <div class="racebar" id="racebar"></div>
+        <div class="ticker"><div class="tk" id="tk"></div></div>
+
+        <div class="body" id="body"></div>
+
+        <div class="dock" id="dock"></div>
+        <div class="tabbar" id="tabbar"></div>
+
+        <div class="scrim" id="scrim"></div>
+        <div class="sheet" id="sheet"></div>
+        <div class="toast" id="toast"></div>
+        <div class="over" id="over"></div>
+      </div>
+    </div>
+  </div>
+
+  <template id="__bundler_thumbnail" data-bg-color="#070908">
+    <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+      <rect x="470" y="250" width="260" height="300" rx="34" fill="none" stroke="#45e08c" stroke-width="10"/>
+      <circle cx="600" cy="400" r="58" fill="none" stroke="#45e08c" stroke-width="10"/>
+      <circle cx="600" cy="400" r="14" fill="#45e08c"/>
+      <line x1="600" y1="262" x2="600" y2="318" stroke="#45e08c" stroke-width="10" stroke-linecap="round"/>
+      <line x1="600" y1="482" x2="600" y2="538" stroke="#45e08c" stroke-width="10" stroke-linecap="round"/>
+      <line x1="482" y1="400" x2="538" y2="400" stroke="#45e08c" stroke-width="10" stroke-linecap="round"/>
+      <line x1="662" y1="400" x2="718" y2="400" stroke="#45e08c" stroke-width="10" stroke-linecap="round"/>
+      <rect x="430" y="600" width="340" height="12" rx="6" fill="#222b27"/>
+      <rect x="430" y="600" width="238" height="12" rx="6" fill="#45e08c"/>
+      <text x="600" y="700" text-anchor="middle" fill="#8b958f" font-family="monospace" font-size="34" letter-spacing="6">AI LAB MAFIA</text>
+    </svg>
+  </template>
+
+  <script src="mobile/state.js"></script>
+  <script src="mobile/ui.js"></script>
+</body>
+</html>

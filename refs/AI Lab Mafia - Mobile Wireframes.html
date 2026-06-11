@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Lab Mafia — Mobile Wireframes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="wireframes/wf.css">
+</head>
+<body data-notes="1" data-hand="0">
+
+<div class="topbar">
+  <div class="brand"><b>AI Lab Mafia</b> · mobile</div>
+  <div class="sub">Variant A refined — race header, docked actions, target picker</div>
+  <div class="spacer"></div>
+  <div class="ctrl">
+    <span class="toggle" data-on="1" id="t-notes"><span class="dot"></span>annotations</span>
+    <span class="toggle" data-on="0" id="t-hand"><span class="dot"></span>hand-drawn</span>
+    <div class="swatches" title="accent">
+      <span class="sw" data-sel="1" style="background:oklch(0.80 0.13 150)" data-h="150"></span>
+      <span class="sw" style="background:oklch(0.80 0.13 200)" data-h="200"></span>
+      <span class="sw" style="background:oklch(0.80 0.13 80)" data-h="80"></span>
+      <span class="sw" style="background:oklch(0.72 0.16 330)" data-h="330"></span>
+    </div>
+  </div>
+</div>
+
+<div class="canvas" id="canvas"></div>
+
+<!-- ============ reusable chrome templates ============ -->
+<template id="tpl-res">
+  <div class="res">
+    <div class="stat"><div class="l">Cash</div><div class="v">$9.1M</div><div class="d">+110k/s</div></div>
+    <div class="stat"><div class="l">Research</div><div class="v">78.8k</div><div class="d">2375/s</div></div>
+    <div class="stat"><div class="l">Influence</div><div class="v">64</div><div class="d">+0.8/s</div></div>
+    <div class="stat heat"><div class="l">Heat</div>
+      <div class="hv"><span class="hn">58</span><span class="max">/100</span></div>
+      <div class="mal">−25% rev<br>+30% opex</div></div>
+  </div>
+  <div class="ticker"><div class="tk">
+    <b>WIRE TAPS</b>
+    <span>Paper published — citations roll in, regulators look away</span>
+    <span>Drone footage of your cooling towers trends for a day</span>
+    <span>A generous donation to the Committee. Files go missing</span>
+    <span>OpenMind poaches two of your leads</span>
+  </div></div>
+</template>
+
+<template id="tpl-fabs">
+  <div class="fabs">
+    <div class="fab evt"><span>⚡ EVENT</span><span class="t">16s</span></div>
+    <div class="fab prompt"><span class="big">ANSWER<br>PROMPT</span><span class="plus">+$3</span></div>
+  </div>
+</template>
+
+<script src="wireframes/build.js"></script>
+</body>
+</html>
