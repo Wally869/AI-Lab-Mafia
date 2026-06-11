@@ -333,19 +333,25 @@ button, input[type="range"] { touch-action: manipulation; }
   color: var(--ink); max-width: 84%; text-align: center; }
 
 /* ---------- end overlay / onboarding ---------- */
+/* The end card is outcome-toned with FIXED colors (true green / red), not the
+   theme accent — a magenta theme shouldn't recolor a victory. */
 .overlay { position: absolute; inset: 0; z-index: 130; background: #000c; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; text-align: center; padding: 22px; }
-.end-card { background: var(--s1); border: 1px solid var(--line2); border-radius: 20px;
-  padding: 30px 26px 26px; width: 100%; max-width: 400px;
+  align-items: center; justify-content: center; text-align: center; padding: 22px;
+  --tone: oklch(0.82 0.15 152); }
+.overlay.lose { --tone: var(--red); }
+.end-card { background: var(--s1); border: 1px solid color-mix(in oklab, var(--tone), var(--line2) 55%);
+  border-radius: 20px; padding: 22px 22px 20px; width: 100%; max-width: 420px;
   display: flex; flex-direction: column; align-items: center;
   box-shadow: 0 40px 90px -30px #000; }
-.overlay.win .end-card { border-color: color-mix(in oklab, var(--green), var(--line2) 55%); }
-.overlay.lose .end-card { border-color: color-mix(in oklab, var(--red), var(--line2) 55%); }
-.headline { font-family: var(--disp); font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
-.overlay.win .headline { color: var(--green); } .overlay.lose .headline { color: var(--red); }
-.overlay p { font-size: 12px; color: var(--mut); margin: 14px 0 0; line-height: 1.6; max-width: 34ch; }
-.end-points { font-family: var(--disp); font-size: 19px; font-weight: 700; color: var(--green); margin: 20px 0 24px; }
-.overlay .actions { display: flex; flex-direction: column; gap: 9px; width: 100%; max-width: 240px; }
+.headline { font-family: var(--disp); font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1;
+  color: var(--tone); }
+.overlay p { font-size: 12px; color: var(--mut); margin: 10px 0 0; line-height: 1.6; }
+.end-points { font-family: var(--disp); font-size: 19px; font-weight: 700; color: var(--tone); margin: 14px 0 16px; }
+/* Buttons span the card and follow the outcome tone, not the app accent. */
+.overlay .actions { display: flex; flex-direction: column; gap: 9px; width: 100%; }
+.end-card .btn { border-color: var(--tone); color: var(--tone);
+  background: color-mix(in oklab, var(--tone), transparent 88%); }
+.end-card .btn.full { background: var(--tone); color: #0b0d0c; }
 
 .onboarding { position: absolute; inset: 0; z-index: 140; background: #000d; display: flex; align-items: center;
   justify-content: center; padding: 18px; }

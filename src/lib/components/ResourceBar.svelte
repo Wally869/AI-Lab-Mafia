@@ -45,8 +45,6 @@
       <div class="stat-delta">{fmt(g.state.groundCompute)} gnd · {fmt(g.state.orbitalCompute)} orb</div>
     {:else if g.state.computeMult > 1}
       <div class="stat-delta">×{g.state.computeMult.toFixed(1)} optimized</div>
-    {:else}
-      <div class="stat-delta" style="color:var(--mut2)">ground</div>
     {/if}
   </div>
   <div class="stat heat" title={heatMsg}>
